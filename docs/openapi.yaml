@@ -1,0 +1,290 @@
+openapi: 3.0.3
+info:
+  title: WareFlow API
+  version: 1.0.0
+  description: Inventory & Order Management API for WareFlow
+
+servers:
+  - url: http://localhost:5000/api/v1
+    description: Local development server
+  - url: https://api.example.com/api/v1
+    description: Production server (replace with deployed URL)
+
+paths:
+  /products:
+    post:
+      summary: Create a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreate'
+      responses:
+        '201':
+          description: Created product
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400': { description: Validation error }
+        '409': { description: SKU conflict }
+    get:
+      summary: List products
+      parameters: []
+      responses:
+        '200':
+          description: Product list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+
+  /products/{id}:
+    get:
+      summary: Get product by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Product
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404': { description: Not found }
+    put:
+      summary: Update a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductUpdate'
+      responses:
+        '200': { description: Updated product }
+        '400': { description: Validation error }
+        '404': { description: Not found }
+        '409': { description: SKU conflict }
+    delete:
+      summary: Delete product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204': { description: Deleted }
+        '404': { description: Not found }
+
+  /customers:
+    post:
+      summary: Create customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerCreate'
+      responses:
+        '201': { description: Created customer }
+        '400': { description: Validation error }
+        '409': { description: Email conflict }
+    get:
+      summary: List customers
+      responses:
+        '200':
+          description: Customer list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Customer'
+
+  /customers/{id}:
+    get:
+      summary: Get customer by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200': { description: Customer }
+        '404': { description: Not found }
+    delete:
+      summary: Delete customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204': { description: Deleted }
+        '404': { description: Not found }
+
+  /orders:
+    post:
+      summary: Create order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCreate'
+      responses:
+        '201':
+          description: Created order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400': { description: Validation error }
+        '404': { description: Customer or product not found }
+        '409': { description: Insufficient inventory }
+    get:
+      summary: List orders
+      responses:
+        '200':
+          description: Order list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+
+  /orders/{id}:
+    get:
+      summary: Get order by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200': { description: Order }
+        '404': { description: Not found }
+    delete:
+      summary: Delete order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204': { description: Deleted }
+
+  /dashboard/summary:
+    get:
+      summary: Dashboard summary
+      responses:
+        '200':
+          description: Summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_products:
+                    type: integer
+                  total_customers:
+                    type: integer
+                  total_orders:
+                    type: integer
+                  low_stock:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        sku: { type: string }
+        price: { type: string, format: decimal }
+        quantity_in_stock: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    ProductCreate:
+      type: object
+      required: [name, sku, price, quantity_in_stock]
+      properties:
+        name: { type: string }
+        sku: { type: string }
+        price: { type: string }
+        quantity_in_stock: { type: integer }
+
+    ProductUpdate:
+      type: object
+      properties:
+        name: { type: string }
+        sku: { type: string }
+        price: { type: string }
+        quantity_in_stock: { type: integer }
+
+    Customer:
+      type: object
+      properties:
+        id: { type: integer }
+        full_name: { type: string }
+        email: { type: string }
+        phone_number: { type: string }
+        created_at: { type: string, format: date-time }
+
+    CustomerCreate:
+      type: object
+      required: [full_name, email]
+      properties:
+        full_name: { type: string }
+        email: { type: string }
+        phone_number: { type: string }
+
+    OrderItem:
+      type: object
+      properties:
+        product_id: { type: integer }
+        quantity: { type: integer }
+        unit_price: { type: string }
+
+    OrderCreate:
+      type: object
+      required: [customer_id, items]
+      properties:
+        customer_id: { type: integer }
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+
+    Order:
+      type: object
+      properties:
+        id: { type: integer }
+        customer_id: { type: integer }
+        total_amount: { type: string }
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'

@@ -1,0 +1,23 @@
+# Render manifest for WareFlow
+# See https://render.com/docs/manifest for help. Adjust names and regions as needed.
+services:
+  - type: managed-postgres
+    name: wareflow-db
+    plan: starter # change plan as needed (starter, standard, premium)
+    region: oregon
+    databaseName: wareflow
+
+  - type: web_service
+    name: wareflow-backend
+    env: python
+    plan: starter
+    region: oregon
+    repo: <YOUR_GITHUB_USER_OR_ORG>/REPO_NAME
+    branch: main
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: bash backend/start.sh
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase: wareflow-db
+      - key: SECRET_KEY
+        value: "change-me"
